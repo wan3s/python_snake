@@ -110,7 +110,6 @@ class Snake:
         x_dir, y_dir = start_dir
         for _ in range(start_len):
             square = DynamicSquare(x_pos, y_pos, dir=start_dir)
-            print(x_pos, y_pos)
             x_pos = (x_pos - consts.CELL_SIZE * x_dir) % consts.WINDOW_WIDTH
             y_pos = (y_pos - consts.CELL_SIZE * y_dir) % consts.WINDOW_HEIGHT
             self._snake.append(square)
@@ -187,8 +186,8 @@ class Apple(StaticSquare):
         self._sprites.add(self)
 
     def place(self, snake):
-        x_steps = consts.WINDOW_WIDTH // (2 * consts.CELL_SIZE)
-        y_steps = consts.WINDOW_HEIGHT // (2 * consts.CELL_SIZE)
+        x_steps = consts.WINDOW_WIDTH // (2 * consts.CELL_SIZE) - 1
+        y_steps = consts.WINDOW_HEIGHT // (2 * consts.CELL_SIZE) - 1
 
         yet_another_try = True
         while yet_another_try:
@@ -198,8 +197,6 @@ class Apple(StaticSquare):
 
             x = (snake.head.rect.x + x_off * consts.CELL_SIZE) % consts.WINDOW_WIDTH
             y = (snake.head.rect.y + y_off * consts.CELL_SIZE) % consts.WINDOW_HEIGHT
-
-            print(consts.WINDOW_WIDTH/2, consts.WINDOW_HEIGHT/2, x_off, y_off, x, y)
 
             if snake.has_square_pos(x, y):
                 yet_another_try = True
