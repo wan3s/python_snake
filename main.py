@@ -6,6 +6,7 @@ from json.decoder import JSONDecodeError
 
 import consts
 
+
 class Application:
     _KEY_MAP = {
         pygame.K_UP: (0, -1),
@@ -105,8 +106,8 @@ class DynamicSquare(StaticSquare):
 class Snake:
     def __init__(
         self,
-        start_x=consts.WINDOW_WIDTH/2,
-        start_y=consts.WINDOW_HEIGHT/2,
+        start_x=consts.WINDOW_WIDTH / 2,
+        start_y=consts.WINDOW_HEIGHT / 2,
         start_dir=consts.START_DIR,
         start_len=5,
     ):
@@ -200,7 +201,7 @@ class Apple(StaticSquare):
         x_steps = consts.WINDOW_WIDTH // (2 * consts.CELL_SIZE) - 1
         y_steps = consts.WINDOW_HEIGHT // (2 * consts.CELL_SIZE) - 1
 
-        start_x, start_y = self._start_pos
+        x, y = start_x, start_y = self._start_pos
 
         yet_another_try = True
         while yet_another_try:
@@ -222,19 +223,20 @@ class Apple(StaticSquare):
 class Score:
     def __init__(self):
         self._cur_score = 0
-        with open(consts.MAX_SCORE_PATH, 'w+') as max_score_file:
+        with open(consts.MAX_SCORE_PATH, 'r+') as max_score_file:
             data = None
             try:
                 data = json.load(max_score_file)
             except JSONDecodeError:
                 pass
-            self._max_score = (data or {}).get('max_score', 0)
-        self.font = pygame.font.SysFont('freesansbold', 30)
+            self._cached_data = data or {}
+        self._max_score = self._cached_data.get('max_score', 0)
+        self.font = pygame.font.SysFont('freesansbold', 25)
 
     def draw(self, screen):
         x_pos = consts.SCORE_TEXT_X_POS
         y_pos = consts.SCORE_TEXT_Y_POS
-        step = 30
+        step = 25
         for raw_text in [
             f'Score: {self._cur_score}',
             f'Max: {self._max_score}',
@@ -252,7 +254,7 @@ class Score:
         self._cur_score += 1
         if self._cur_score > self._max_score:
             self._max_score = self._cur_score
-            with open(consts.MAX_SCORE_PATH, 'w+') as max_score_file:
+            with open(consts.MAX_SCORE_PATH, 'r+') as max_score_file:
                 data = None
                 try:
                     data = json.load(max_score_file)
@@ -265,9 +267,11 @@ class Score:
                 print(new_data)
                 json.dump(new_data, max_score_file)
 
+
 def main():
     app = Application()
     app.run()
+
 
 if __name__ == '__main__':
     main()
