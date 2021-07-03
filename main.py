@@ -1,9 +1,12 @@
+import json
+import os
 import pygame
 import random
 
-from pygame import sndarray
+from json.decoder import JSONDecodeError
 
 import consts
+
 
 class Application:
     _KEY_MAP = {
@@ -22,8 +25,12 @@ class Application:
         pygame.display.set_caption(consts.WINDOW_TITLE)
         self.clock = pygame.time.Clock()
         self.snake = Snake()
-        self.apple = Apple()
+        self.apple = Apple(
+            self.snake.head.rect.x,
+            self.snake.head.rect.y,
+        )
         self.apple.place(self.snake)
+        self.score = Score()
 
     def run(self):
         while True:
@@ -42,9 +49,11 @@ class Application:
                 self.snake.head.rect.x == self.apple.rect.x and
                 self.snake.head.rect.y == self.apple.rect.y 
             ):
+                self.score.update()
                 self.snake.append()
                 self.apple.place(self.snake)
             self.screen.fill(consts.BLACK)
+            self.score.draw(self.screen)
             self.snake.draw(self.screen)
             self.apple.draw(self.screen)
             pygame.display.flip()
@@ -98,8 +107,8 @@ class DynamicSquare(StaticSquare):
 class Snake:
     def __init__(
         self,
-        start_x=consts.WINDOW_WIDTH/2,
-        start_y=consts.WINDOW_HEIGHT/2,
+        start_x=consts.WINDOW_WIDTH / 2,
+        start_y=consts.WINDOW_HEIGHT / 2,
         start_dir=consts.START_DIR,
         start_len=5,
     ):
@@ -180,14 +189,20 @@ class Snake:
 
 
 class Apple(StaticSquare):
-    def __init__(self):
+    def __init__(self, start_x=0, start_y=0):
         super().__init__(color=consts.RED)
         self._sprites = pygame.sprite.Group()
         self._sprites.add(self)
+        self._start_pos = (
+            start_x,
+            start_y,
+        )
 
     def place(self, snake):
         x_steps = consts.WINDOW_WIDTH // (2 * consts.CELL_SIZE) - 1
         y_steps = consts.WINDOW_HEIGHT // (2 * consts.CELL_SIZE) - 1
+
+        x, y = start_x, start_y = self._start_pos
 
         yet_another_try = True
         while yet_another_try:
@@ -195,8 +210,8 @@ class Apple(StaticSquare):
             x_off = random.randint(-x_steps, x_steps)
             y_off = random.randint(-y_steps, y_steps)
 
-            x = (snake.head.rect.x + x_off * consts.CELL_SIZE) % consts.WINDOW_WIDTH
-            y = (snake.head.rect.y + y_off * consts.CELL_SIZE) % consts.WINDOW_HEIGHT
+            x = (start_x + x_off * consts.CELL_SIZE) % consts.WINDOW_WIDTH
+            y = (start_y + y_off * consts.CELL_SIZE) % consts.WINDOW_HEIGHT
 
             if snake.has_square_pos(x, y):
                 yet_another_try = True
@@ -206,9 +221,51 @@ class Apple(StaticSquare):
         self._sprites.draw(screen)
 
 
+class Score:
+    def __init__(self):
+        self._cur_score = 0
+        data = None
+        if os.path.exists(consts.MAX_SCORE_PATH):
+            with open(consts.MAX_SCORE_PATH, 'r') as max_score_file:
+                try:
+                    data = json.load(max_score_file)
+                except JSONDecodeError:
+                    pass
+        self._cached_data = data or {}
+        self._max_score = self._cached_data.get('max_score', 0)
+        self.font = pygame.font.SysFont('freesansbold', 25)
+
+    def draw(self, screen):
+        x_pos = consts.SCORE_TEXT_X_POS
+        y_pos = consts.SCORE_TEXT_Y_POS
+        step = 25
+        for raw_text in [
+            f'Score: {self._cur_score}',
+            f'Max: {self._max_score}',
+        ]:
+            text = self.font.render(
+                raw_text, True, (255, 255, 255)
+            )
+            screen.blit(
+                text, (x_pos, y_pos),
+            )
+            y_pos += step
+        pygame.display.flip()
+
+    def update(self):
+        self._cur_score += 1
+        if self._cur_score > self._max_score:
+            self._max_score = self._cur_score
+            self._cached_data['max_score'] = self._max_score
+            with open(consts.MAX_SCORE_PATH, 'w+') as max_score_file:
+                print(self._cached_data)
+                json.dump(self._cached_data, max_score_file)
+
+
 def main():
     app = Application()
     app.run()
+
 
 if __name__ == '__main__':
     main()
