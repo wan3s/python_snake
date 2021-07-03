@@ -1,4 +1,5 @@
 import json
+import os
 import pygame
 import random
 
@@ -223,13 +224,14 @@ class Apple(StaticSquare):
 class Score:
     def __init__(self):
         self._cur_score = 0
-        with open(consts.MAX_SCORE_PATH, 'r+') as max_score_file:
-            data = None
-            try:
-                data = json.load(max_score_file)
-            except JSONDecodeError:
-                pass
-            self._cached_data = data or {}
+        data = None
+        if os.path.exists(consts.MAX_SCORE_PATH):
+            with open(consts.MAX_SCORE_PATH, 'r') as max_score_file:
+                try:
+                    data = json.load(max_score_file)
+                except JSONDecodeError:
+                    pass
+        self._cached_data = data or {}
         self._max_score = self._cached_data.get('max_score', 0)
         self.font = pygame.font.SysFont('freesansbold', 25)
 
@@ -254,18 +256,10 @@ class Score:
         self._cur_score += 1
         if self._cur_score > self._max_score:
             self._max_score = self._cur_score
-            with open(consts.MAX_SCORE_PATH, 'r+') as max_score_file:
-                data = None
-                try:
-                    data = json.load(max_score_file)
-                except JSONDecodeError:
-                    pass
-                new_data = {
-                    **(data or {}),
-                    'max_score': self._max_score,
-                }
-                print(new_data)
-                json.dump(new_data, max_score_file)
+            self._cached_data['max_score'] = self._max_score
+            with open(consts.MAX_SCORE_PATH, 'w+') as max_score_file:
+                print(self._cached_data)
+                json.dump(self._cached_data, max_score_file)
 
 
 def main():
