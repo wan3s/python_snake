@@ -23,6 +23,8 @@ class Application:
             (consts.WINDOW_WIDTH, consts.WINDOW_HEIGHT)
         )
         pygame.display.set_caption(consts.WINDOW_TITLE)
+        self._fps = consts.FPS_MIN
+        self._iteration_num = 1
         self.clock = pygame.time.Clock()
         self.snake = Snake()
         self.apple = Apple(
@@ -34,7 +36,7 @@ class Application:
 
     def run(self):
         while True:
-            self.clock.tick(consts.FPS)
+            self.clock.tick(self._fps)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     return
@@ -49,6 +51,7 @@ class Application:
                 self.snake.head.rect.x == self.apple.rect.x and
                 self.snake.head.rect.y == self.apple.rect.y 
             ):
+                self._speed_up()
                 self.score.update()
                 self.snake.append()
                 self.apple.place(self.snake)
@@ -57,6 +60,15 @@ class Application:
             self.snake.draw(self.screen)
             self.apple.draw(self.screen)
             pygame.display.flip()
+
+    def _speed_up(self):
+        if self._fps >= consts.FPS_MAX:
+            return
+        self._iteration_num = (
+                (self._iteration_num + 1) % consts.SPEED_UP_ITERATIONS_NUM
+        )
+        if not self._iteration_num:
+            self._fps += 1
 
 
 class StaticSquare(pygame.sprite.Sprite):
